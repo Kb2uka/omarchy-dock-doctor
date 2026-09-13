@@ -18,7 +18,7 @@ sys.path.insert(0, sys.argv[1])
 from dock_doctor import service
 from tests_fixture import fixture
 service.scan = lambda: fixture
-service.Observer.__init__.__defaults__ = (service.scan,)
+service.computer_info = lambda: {"name": "Fixture computer", "model": "Fixture model"}
 original = subprocess.Popen
 def monitor(*args, **kwargs):
     process = original([sys.executable, "-c", "import time; time.sleep(60)"], **kwargs)
@@ -44,6 +44,7 @@ service.main()
             self.assertEqual(process.returncode, 0, error)
             messages = [json.loads(line) for line in output.splitlines()]
             self.assertTrue(any(m.get("ok") is True for m in messages))
+            self.assertEqual(next(m for m in messages if m.get("kind") == "snapshot")["computer"]["name"], "Fixture computer")
             pid = int(error.strip())
             with self.assertRaises(ProcessLookupError):
                 os.kill(pid, 0)

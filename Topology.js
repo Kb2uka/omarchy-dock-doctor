@@ -1,4 +1,38 @@
 .pragma library
+function present(devices, computer, details) {
+    if (!computer) return devices
+    var host={id:"@computer",parent:"",name:computer.name || "This computer",kind:"laptop",
+              category:computer.model || "This computer",computer:true,controller:true}
+    var all={}, nodes=[]
+    devices.forEach(function(d){all[d.id]=d})
+    devices.forEach(function(d){
+        if (!details && d.controller) return
+        var copy=Object.assign({},d), parent=all[d.parent], visited={}
+        while (!details && parent && parent.controller && !visited[parent.id]) {
+            visited[parent.id]=true
+            parent=all[parent.parent]
+        }
+        copy.parent=parent?parent.id:host.id
+        nodes.push(copy)
+    })
+    if (!details) {
+        var removed={}
+        nodes.forEach(function(node){
+            if (node.kind!=="hub" || removed[node.id]) return
+            var chain={}; chain[node.id]=true
+            var count=1
+            while (count<=devices.length) {
+                var children=nodes.filter(function(d){return !removed[d.id] && d.parent===node.id})
+                if(children.length!==1 || children[0].kind!=="hub" || chain[children[0].id]) break
+                var child=children[0]; chain[child.id]=true; removed[child.id]=true; count++
+                nodes.forEach(function(d){if(d.parent===child.id)d.parent=node.id})
+            }
+            if(count>1)node.collapsedHubs=count
+        })
+        nodes=nodes.filter(function(d){return !removed[d.id]})
+    }
+    return [host].concat(nodes)
+}
 function arrange(devices, availableWidth, availableHeight) {
     var lookup={}, children={}, seen={}, result=[], cursor=0, deepest=0
     devices.forEach(function(d) { lookup[d.id]=d; children[d.id]=[] })

@@ -24,7 +24,7 @@ def descendants(pid):
                 if len(seen) > 128:
                     raise RuntimeError("Unexpected native fixture process count")
                 pending.append(child)
-                yield child
+                yield child, parent
 
 
 def run(harness, log):
@@ -36,28 +36,31 @@ def run(harness, log):
         try:
             deadline = time.monotonic() + 30
             while process.poll() is None:
-                current_observers = 0
-                for pid in descendants(process.pid):
+                for pid, parent in descendants(process.pid):
                     try:
                         argv = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
-                        role = ("observer" if any(a.endswith(b"/dock-doctor.py") for a in argv)
+                        # A forked monitor inherits Python's argv until exec completes.
+                        role = ("observer" if parent == process.pid and any(a.endswith(b"/dock-doctor.py") for a in argv)
                                 else "monitor" if argv[:2] == [b"/usr/bin/udevadm", b"monitor"] else "")
-                        if role == "observer":
-                            current_observers += 1
                         if role and pid not in tracked:
                             tracked[pid] = (role, os.pidfd_open(pid))
                     except ProcessLookupError:
                         pass
                     except FileNotFoundError:
                         pass
-                if current_observers > 1:
+                observer_fds = [fd for role, fd in tracked.values() if role == "observer"]
+                # Sample lifetime together: /proc traversal can span a process handoff.
+                exited = set(select.select(observer_fds, [], [], 0)[0])
+                observers = [fd for fd in observer_fds if fd not in exited]
+                if len(observers) > 1:
                     raise RuntimeError("Multiple observer processes started in one shell")
                 if not restart_injected and "REQUEST_OBSERVER_RESTART" in Path(log).read_text():
-                    observers = [fd for role, fd in tracked.values()
-                                 if role == "observer" and not select.select([fd], [], [], 0)[0]]
                     if len(observers) != 1:
                         raise RuntimeError("Crash recovery requires exactly one live observer")
-                    signal.pidfd_send_signal(observers[0], signal.SIGKILL)
+                    try:
+                        signal.pidfd_send_signal(observers[0], signal.SIGKILL)
+                    except ProcessLookupError as error:
+                        raise RuntimeError("Observer exited before restart injection") from error
                     restart_injected = True
                 if time.monotonic() >= deadline:
                     raise RuntimeError("Native fixture did not exit")
@@ -79,9 +82,13 @@ def run(harness, log):
                 process.kill()
                 process.wait(timeout=5)
             for _, fd in tracked.values():
-                if not select.select([fd], [], [], 0)[0]:
-                    signal.pidfd_send_signal(fd, signal.SIGKILL)
-                os.close(fd)
+                try:
+                    if not select.select([fd], [], [], 0)[0]:
+                        signal.pidfd_send_signal(fd, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                finally:
+                    os.close(fd)
 
 
 if __name__ == "__main__":

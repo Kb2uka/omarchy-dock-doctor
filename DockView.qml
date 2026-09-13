@@ -126,7 +126,7 @@ Rectangle {
         RowLayout {
             visible:root.page==="Devices"
             Layout.fillWidth:true; Layout.fillHeight:true; spacing:10
-            TopologyPanel { id:topology; objectName:"topology"; Layout.fillWidth:true; Layout.fillHeight:true; Layout.preferredWidth:650; devices:root.devices; selectedId:root.selectedId; onDeviceSelected:function(deviceId){root.selectedId=deviceId} }
+            TopologyPanel { id:topology; objectName:"topology"; Layout.fillWidth:true; Layout.fillHeight:true; Layout.preferredWidth:650; devices:root.devices; computer:root.demo?null:root.current.computer || null; selectedId:root.selectedId; onDeviceSelected:function(deviceId){root.selectedId=deviceId} }
             Inspector { objectName:"inspector"; Layout.fillHeight:true; Layout.preferredWidth:Math.max(280,(root.width-sidebar.width-38)*0.32); device:root.selected; devices:root.devices; onCompareRequested:root.page="Compare" }
         }
         EventsPanel {
@@ -151,7 +151,7 @@ Rectangle {
                 DockButton { objectName:"clear-events"; text:"Clear event history"; quiet:true; enabled:!root.demo&&root.canWrite; onClicked:root.confirmingClear=true }
                 Rectangle { width:parent.width; height:1; color:P.border }
                 DockText { text:"Reports & privacy"; font.pixelSize:14; font.weight:Font.DemiBold }
-                DockText { width:parent.width; text:"Reports are saved locally and include device names, USB IDs, link speeds, and event history. Serial-number fields and identity keys are excluded. Review a report before sharing it. Nothing is uploaded."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
+                DockText { width:parent.width; text:"Reports are saved locally and include your computer name, model and manufacturer, device names, USB IDs, link speeds, and event history. Serial-number fields and identity keys are excluded. Review a report before sharing it. Nothing is uploaded."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
                 Rectangle { width:parent.width; height:1; color:P.border }
                 DockText { text:"Design preview"; font.pixelSize:14; font.weight:Font.DemiBold }
                 DockText { width:parent.width; text:"Explore the interface with illustrative readings. Demo actions stay in memory and never replace your live baseline."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
