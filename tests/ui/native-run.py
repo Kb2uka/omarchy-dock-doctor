@@ -24,7 +24,7 @@ def descendants(pid):
                 if len(seen) > 128:
                     raise RuntimeError("Unexpected native fixture process count")
                 pending.append(child)
-                yield child
+                yield child, parent
 
 
 def run(harness, log):
@@ -36,10 +36,11 @@ def run(harness, log):
         try:
             deadline = time.monotonic() + 30
             while process.poll() is None:
-                for pid in descendants(process.pid):
+                for pid, parent in descendants(process.pid):
                     try:
                         argv = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
-                        role = ("observer" if any(a.endswith(b"/dock-doctor.py") for a in argv)
+                        # A forked monitor inherits Python's argv until exec completes.
+                        role = ("observer" if parent == process.pid and any(a.endswith(b"/dock-doctor.py") for a in argv)
                                 else "monitor" if argv[:2] == [b"/usr/bin/udevadm", b"monitor"] else "")
                         if role and pid not in tracked:
                             tracked[pid] = (role, os.pidfd_open(pid))

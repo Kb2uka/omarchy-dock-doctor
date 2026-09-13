@@ -12,18 +12,25 @@ spec.loader.exec_module(runner)
 
 
 class NativeRunnerTests(unittest.TestCase):
-    def check_handoff(self, overlap, signal_error=None, restart=False):
+    def check_handoff(self, overlap, signal_error=None, restart=False, forked_monitor=False):
         self.closed = []
         process = Mock(pid=10, returncode=0)
         process.poll.side_effect = [None, 0, 0]
         exited = set()
 
-        def children(pid):
-            yield 101
-            # The prior observer exits between two /proc directory reads.
-            if not overlap:
+        def read_text(path):
+            if str(path) == "/proc/10/task/10/children":
+                return "101" if forked_monitor else "101 102"
+            if str(path) == "/proc/101/task/101/children" and forked_monitor:
+                return "102"
+            if str(path).endswith("/children"):
+                return ""
+            return "REQUEST_OBSERVER_RESTART" if restart else ""
+
+        def command(path):
+            if str(path) == "/proc/102/cmdline" and not overlap:
                 exited.add(101)
-            yield 102
+            return b"python3\0/dock-doctor.py\0watch\0"
 
         def ready(fds, write, error, timeout):
             if timeout:
@@ -32,14 +39,13 @@ class NativeRunnerTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as directory, \
                 patch.object(runner.subprocess, "Popen", return_value=process), \
-                patch.object(runner, "descendants", side_effect=children), \
-                patch.object(runner.Path, "read_bytes", return_value=b"python3\0/dock-doctor.py\0watch\0"), \
+                patch.object(runner.Path, "read_bytes", autospec=True, side_effect=command), \
                 patch.object(runner.os, "pidfd_open", side_effect=lambda pid: pid), \
                 patch.object(runner.os, "close", side_effect=self.closed.append), \
                 patch.object(runner.os, "access", return_value=False), \
                 patch.object(runner.select, "select", side_effect=ready), \
                 patch.object(runner.signal, "pidfd_send_signal", side_effect=signal_error), \
-                patch.object(runner.Path, "read_text", return_value="REQUEST_OBSERVER_RESTART" if restart else ""), \
+                patch.object(runner.Path, "read_text", autospec=True, side_effect=read_text), \
                 patch.object(runner.time, "sleep"), \
                 patch.object(runner.time, "monotonic", return_value=0):
             runner.run("fixture", str(Path(directory) / "native.log"))
@@ -60,3 +66,7 @@ class NativeRunnerTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Observer exited before restart injection"):
             self.check_handoff(overlap=False, signal_error=ProcessLookupError(), restart=True)
         self.assertEqual(self.closed, [101, 102])
+
+    def test_monitor_before_exec_is_not_a_second_observer(self):
+        self.check_handoff(overlap=True, forked_monitor=True)
+        self.assertEqual(self.closed, [101])
