@@ -151,7 +151,7 @@ Rectangle {
                 DockButton { objectName:"clear-events"; text:"Clear event history"; quiet:true; enabled:!root.demo&&root.canWrite; onClicked:root.confirmingClear=true }
                 Rectangle { width:parent.width; height:1; color:P.border }
                 DockText { text:"Reports & privacy"; font.pixelSize:14; font.weight:Font.DemiBold }
-                DockText { width:parent.width; text:"Reports are saved locally and include device names, USB IDs, link speeds, and event history. Serial-number fields and identity keys are excluded. Review a report before sharing it. Nothing is uploaded."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
+                DockText { width:parent.width; text:"Reports are saved locally and include your computer name, model and manufacturer, device names, USB IDs, link speeds, and event history. Serial-number fields and identity keys are excluded. Review a report before sharing it. Nothing is uploaded."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
                 Rectangle { width:parent.width; height:1; color:P.border }
                 DockText { text:"Design preview"; font.pixelSize:14; font.weight:Font.DemiBold }
                 DockText { width:parent.width; text:"Explore the interface with illustrative readings. Demo actions stay in memory and never replace your live baseline."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }

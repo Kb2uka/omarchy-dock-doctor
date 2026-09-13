@@ -59,3 +59,5 @@ class ComputerTests(unittest.TestCase):
         self.assertEqual(snapshot["computer"]["name"], "studio-laptop")
         self.assertEqual(snapshot["devices"], [])
         self.assertEqual(snapshot["events"], [])
+        generic = Observer(Store(self.root / "generic"), scanner=lambda: []).snapshot()
+        self.assertEqual(generic["computer"], {"name": "This computer", "model": "", "manufacturer": ""})

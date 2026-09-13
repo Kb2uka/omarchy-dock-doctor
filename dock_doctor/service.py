@@ -18,7 +18,7 @@ from . import files
 class Observer:
     def __init__(self, store, scanner=scan, computer=None):
         self.store, self.scanner = store, scanner
-        self.computer = computer or {"name": "This computer", "manufacturer": ""}
+        self.computer = computer or {"name": "This computer", "model": "", "manufacturer": ""}
         self.devices = []
         self.started = False
         self.scan_error = ""
