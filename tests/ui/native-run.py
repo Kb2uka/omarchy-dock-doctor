@@ -56,7 +56,10 @@ def run(harness, log):
                 if not restart_injected and "REQUEST_OBSERVER_RESTART" in Path(log).read_text():
                     if len(observers) != 1:
                         raise RuntimeError("Crash recovery requires exactly one live observer")
-                    signal.pidfd_send_signal(observers[0], signal.SIGKILL)
+                    try:
+                        signal.pidfd_send_signal(observers[0], signal.SIGKILL)
+                    except ProcessLookupError as error:
+                        raise RuntimeError("Observer exited before restart injection") from error
                     restart_injected = True
                 if time.monotonic() >= deadline:
                     raise RuntimeError("Native fixture did not exit")
@@ -78,9 +81,13 @@ def run(harness, log):
                 process.kill()
                 process.wait(timeout=5)
             for _, fd in tracked.values():
-                if not select.select([fd], [], [], 0)[0]:
-                    signal.pidfd_send_signal(fd, signal.SIGKILL)
-                os.close(fd)
+                try:
+                    if not select.select([fd], [], [], 0)[0]:
+                        signal.pidfd_send_signal(fd, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                finally:
+                    os.close(fd)
 
 
 if __name__ == "__main__":

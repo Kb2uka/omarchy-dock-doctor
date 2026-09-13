@@ -12,7 +12,8 @@ spec.loader.exec_module(runner)
 
 
 class NativeRunnerTests(unittest.TestCase):
-    def check_handoff(self, overlap):
+    def check_handoff(self, overlap, signal_error=None, restart=False):
+        self.closed = []
         process = Mock(pid=10, returncode=0)
         process.poll.side_effect = [None, 0, 0]
         exited = set()
@@ -34,10 +35,11 @@ class NativeRunnerTests(unittest.TestCase):
                 patch.object(runner, "descendants", side_effect=children), \
                 patch.object(runner.Path, "read_bytes", return_value=b"python3\0/dock-doctor.py\0watch\0"), \
                 patch.object(runner.os, "pidfd_open", side_effect=lambda pid: pid), \
-                patch.object(runner.os, "close"), \
+                patch.object(runner.os, "close", side_effect=self.closed.append), \
                 patch.object(runner.os, "access", return_value=False), \
                 patch.object(runner.select, "select", side_effect=ready), \
-                patch.object(runner.signal, "pidfd_send_signal"), \
+                patch.object(runner.signal, "pidfd_send_signal", side_effect=signal_error), \
+                patch.object(runner.Path, "read_text", return_value="REQUEST_OBSERVER_RESTART" if restart else ""), \
                 patch.object(runner.time, "sleep"), \
                 patch.object(runner.time, "monotonic", return_value=0):
             runner.run("fixture", str(Path(directory) / "native.log"))
@@ -48,3 +50,13 @@ class NativeRunnerTests(unittest.TestCase):
     def test_two_live_observers_still_fail(self):
         with self.assertRaisesRegex(RuntimeError, "Multiple observer"):
             self.check_handoff(overlap=True)
+
+    def test_cleanup_exit_race_preserves_failure_and_closes_every_fd(self):
+        with self.assertRaisesRegex(RuntimeError, "Multiple observer"):
+            self.check_handoff(overlap=True, signal_error=ProcessLookupError())
+        self.assertEqual(self.closed, [101, 102])
+
+    def test_exit_before_injection_is_an_explicit_failure(self):
+        with self.assertRaisesRegex(RuntimeError, "Observer exited before restart injection"):
+            self.check_handoff(overlap=False, signal_error=ProcessLookupError(), restart=True)
+        self.assertEqual(self.closed, [101, 102])
