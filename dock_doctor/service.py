@@ -176,7 +176,7 @@ def main():
             raise KeyboardInterrupt
         signal.signal(signal.SIGTERM, stop)
         with files.exclusive_lock(base / "dock-doctor/observer.lock"):
-            observer = Observer(Store(base / "dock-doctor"), computer=computer_info())
+            observer = Observer(Store(base / "dock-doctor"), scanner=scan, computer=computer_info())
             watch(observer)
     except (BrokenPipeError, KeyboardInterrupt):
         pass
