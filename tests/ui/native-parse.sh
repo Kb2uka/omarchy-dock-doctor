@@ -27,6 +27,9 @@ ShellRoot {
   Timer { interval: 1800; running: true; onTriggered: Qt.quit() }
 }
 QML
+if [[ "${DOCK_NATIVE_CASE:-}" == "multimonitor" ]]; then
+  cp tests/ui/native-multimonitor.qml "$harness/shell.qml"
+fi
 export XDG_RUNTIME_DIR="$harness/runtime"
 export XDG_STATE_HOME="$harness/state"
 export WAYLAND_DISPLAY=dd-wayland
@@ -42,3 +45,11 @@ QT_QPA_PLATFORM=wayland python3 tests/ui/native-run.py "$harness" "$art/native-p
 cat "$art/native-parse.log"
 rg -q 'Configuration Loaded' "$art/native-parse.log"
 ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-parse.log"
+
+if [[ -z "${DOCK_NATIVE_CASE:-}" ]]; then
+  cp tests/ui/native-multimonitor.qml "$harness/shell.qml"
+  QT_QPA_PLATFORM=wayland python3 tests/ui/native-run.py "$harness" "$art/native-multimonitor.log"
+  cat "$art/native-multimonitor.log"
+  rg -q 'All widgets removed and recreated successfully' "$art/native-multimonitor.log"
+  ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-multimonitor.log"
+fi

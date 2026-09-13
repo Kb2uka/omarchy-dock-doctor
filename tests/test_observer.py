@@ -54,6 +54,15 @@ class DiscoveryTests(unittest.TestCase):
         self.assertEqual(d["1-1"]["kind"], "audio")
         self.assertEqual(d["1-1"]["parent"], "usb1")
 
+    def test_usb_roots_are_buses_not_additional_computers(self):
+        self.add("usb1", "09", "480")
+        self.add("usb2", "09", "10000")
+        roots = self.scan()
+        self.assertEqual([d["name"] for d in roots], ["USB bus 1", "USB bus 2"])
+        self.assertTrue(all(d["kind"] == "controller" and d["category"] == "USB Root Hub" for d in roots))
+        self.assertTrue(all(d["controller"] and not d["parent"] for d in roots))
+        self.assertTrue(all(d["product"] == "USB Device" for d in roots))
+
     def test_interface_class_identifies_composite_webcam(self):
         path = self.add("1-2")
         (path / "1-2:1.0").mkdir()

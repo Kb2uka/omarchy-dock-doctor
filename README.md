@@ -133,3 +133,5 @@ Linux x64 and arm64 backend checks run in CI; physical arm64 USB hardware remain
 an additional validation target.
 
 MIT license. Copyright KB2UKA.
+
+USB bus roots belong to this computer; they are not other computers or network hosts. Multiple USB root hubs can belong to one physical host controller. Bar widgets on all monitors share one observer; removing the last widget stops it.

@@ -9,24 +9,9 @@ Panel {
     ipcTarget:"kb2uka.dock-doctor"
     implicitWidth:button.implicitWidth
     implicitHeight:button.implicitHeight
-    Connection { id:connection }
-    function send(command) {
-        if(!backend.running || !connection.fresh) { connection.fail("Observer unavailable. Please wait for reconnection.");return }
-        backend.write(JSON.stringify(command)+"\n")
-    }
-    Process {
-        id:backend
-        command:["/usr/bin/python3","-I",decodeURIComponent(Qt.resolvedUrl("dock-doctor.py").toString().replace(/^file:\/\//,"")),"watch"]
-        clearEnvironment:true
-        environment:({"HOME":Quickshell.env("HOME"),"XDG_STATE_HOME":Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME")+"/.local/state","PATH":"/usr/bin:/bin","LANG":"C.UTF-8"})
-        stdinEnabled:true
-        running:true
-        stdout:SplitParser { onRead:function(data){connection.receive(data)} }
-        stderr:SplitParser { onRead:function(data){connection.fail(data)} }
-        onExited:{connection.lost();reconnect.restart()}
-    }
-    Timer { id:reconnect; interval:3000; onTriggered:backend.running=true }
-    Timer { interval:1000;repeat:true;running:true;onTriggered:connection.now=Date.now() }
+    readonly property var connection:LiveObserver.connection
+    Component.onCompleted:LiveObserver.acquire()
+    Component.onDestruction:LiveObserver.release()
     BarIconButton { id:button; anchors.fill:parent;bar:root.bar;text:"󰕓";onPressed:root.toggle() }
     FloatingWindow {
         id:window
@@ -42,7 +27,7 @@ Panel {
             snapshot:connection.snapshot
             connected:connection.fresh
             backendMessage:connection.message
-            onCommandRequested:function(command){root.send(command)}
+            onCommandRequested:function(command){LiveObserver.send(command)}
             onCloseRequested:root.close()
         }
     }

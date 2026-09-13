@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "kb2uka.dock-doctor",
   "name": "Dock Doctor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "KB2UKA",
   "license": "MIT",
   "description": "Understand USB connections, review observed disconnects, and compare negotiated link speeds against a saved working baseline.",

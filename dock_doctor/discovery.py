@@ -70,7 +70,7 @@ def scan(root=Path("/sys/bus/usb/devices"), device_root=Path("/sys/devices")):
                                   ("device", "USB Device"))
             controller = name.startswith("usb")
             if controller:
-                kind, category = "laptop", "USB Host Controller"
+                kind, category = "controller", "USB Root Hub"
             elif "keyboard" in title.lower():
                 kind, category = "keyboard", "HID Keyboard"
             parent = "" if controller else name.rsplit(".", 1)[0] if "." in name else "usb" + name.split("-")[0]
@@ -79,7 +79,7 @@ def scan(root=Path("/sys/bus/usb/devices"), device_root=Path("/sys/devices")):
             port = name.split("-", 1)[-1] if not controller else "root"
             identity = f"{vendor}:{product}:serial:{serial}" if serial else f"{vendor}:{product}:port:{controller_path}:{port}"
             result.append({"id": name, "key": hashlib.sha256(identity.encode()).hexdigest(),
-                           "parent": parent, "name": title or ("USB Controller" if controller else "USB Device"),
+                           "parent": parent, "name": "USB bus " + name[3:] if controller else title or "USB Device",
                            "kind": kind, "category": category, "speed": numeric(optional(path / "speed")),
                            "vendor": vendor, "productId": product, "manufacturer": manufacturer,
                            "product": title, "serial": serial, "identityBasis": "serial" if serial else "port",
