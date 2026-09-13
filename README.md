@@ -136,4 +136,4 @@ MIT license. Copyright KB2UKA.
 
 USB bus roots belong to this computer; they are not other computers or network hosts. Multiple USB root hubs can belong to one physical host controller. Bar widgets on all monitors share one observer; removing the last widget stops it.
 
-The root `qmldir` explicitly registers the shared observer and interface types for Omarchy’s dynamic plugin loader. Keep its declarations in sync when adding or renaming root QML files. Native checks include a cold external plugin load and opening both monitor widgets through their badge handlers.
+The `runtime/qmldir` explicitly registers the shared observer for Omarchy’s dynamic plugin loader, keeping shell dependencies separate from the interface components. Native checks include a cold external plugin load and opening both monitor widgets through their badge handlers.

@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import ".." as Dock
 
 Singleton {
     id:root
@@ -9,14 +10,14 @@ Singleton {
     property int consumers:0
     function acquire() { consumers++ }
     function release() { consumers=Math.max(0,consumers-1);if(!consumers)reconnect.stop() }
-    Connection { id:state }
+    Dock.Connection { id:state }
     function send(command) {
         if(!backend.running || !state.fresh) { state.fail("Observer unavailable. Please wait for reconnection.");return }
         backend.write(JSON.stringify(command)+"\n")
     }
     Process {
         id:backend
-        command:["/usr/bin/python3","-I",decodeURIComponent(Qt.resolvedUrl("dock-doctor.py").toString().replace(/^file:\/\//,"")),"watch"]
+        command:["/usr/bin/python3","-I",decodeURIComponent(Qt.resolvedUrl("../dock-doctor.py").toString().replace(/^file:\/\//,"")),"watch"]
         clearEnvironment:true
         environment:({"HOME":Quickshell.env("HOME"),"XDG_STATE_HOME":Quickshell.env("XDG_STATE_HOME") || Quickshell.env("HOME")+"/.local/state","PATH":"/usr/bin:/bin","LANG":"C.UTF-8"})
         stdinEnabled:true

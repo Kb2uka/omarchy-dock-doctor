@@ -13,7 +13,7 @@ trap cleanup EXIT
 mkdir -p "$harness/dock" "$harness/runtime" "$harness/state"
 chmod 700 "$harness/runtime" "$harness/state"
 cp ./*.qml ./*.js ./dock-doctor.py "$harness/dock/"
-cp ./qmldir "$harness/dock/"
+cp -r ./runtime "$harness/dock/"
 cp -r dock_doctor "$harness/dock/"
 cp -r /usr/share/omarchy/shell/Ui /usr/share/omarchy/shell/Commons "$harness/"
 cat > "$harness/shell.qml" <<'QML'
