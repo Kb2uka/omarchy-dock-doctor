@@ -51,5 +51,6 @@ if [[ -z "${DOCK_NATIVE_CASE:-}" ]]; then
   QT_QPA_PLATFORM=wayland python3 tests/ui/native-run.py "$harness" "$art/native-multimonitor.log"
   cat "$art/native-multimonitor.log"
   rg -q 'All widgets removed and recreated successfully' "$art/native-multimonitor.log"
+  rg -q 'Both widgets recovered fresh live observations after observer exit' "$art/native-multimonitor.log"
   ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-multimonitor.log"
 fi

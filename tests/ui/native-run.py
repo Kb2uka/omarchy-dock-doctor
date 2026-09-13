@@ -29,6 +29,7 @@ def descendants(pid):
 
 def run(harness, log):
     tracked = {}
+    restart_injected = False
     with open(log, "w") as output:
         process = subprocess.Popen(["quickshell", "-p", harness, "--no-color"],
                                    stdout=output, stderr=subprocess.STDOUT)
@@ -51,6 +52,13 @@ def run(harness, log):
                         pass
                 if current_observers > 1:
                     raise RuntimeError("Multiple observer processes started in one shell")
+                if not restart_injected and "REQUEST_OBSERVER_RESTART" in Path(log).read_text():
+                    observers = [fd for role, fd in tracked.values()
+                                 if role == "observer" and not select.select([fd], [], [], 0)[0]]
+                    if len(observers) != 1:
+                        raise RuntimeError("Crash recovery requires exactly one live observer")
+                    signal.pidfd_send_signal(observers[0], signal.SIGKILL)
+                    restart_injected = True
                 if time.monotonic() >= deadline:
                     raise RuntimeError("Native fixture did not exit")
                 time.sleep(0.02)

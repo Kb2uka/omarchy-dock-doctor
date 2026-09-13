@@ -52,9 +52,18 @@ ShellRoot {
                 root.phase = 4
             } else if (root.phase === 4 && a && b && a.connected && b.connected && a.snapshot.ready && b.snapshot.ready) {
                 console.log("All widgets removed and recreated successfully")
+                root.previousObservation = b.snapshot.observedAt
+                console.log("REQUEST_OBSERVER_RESTART")
+                root.phase = 5
+            } else if (root.phase === 5 && a && b && !a.connected && !b.connected) {
+                console.log("Both widgets detected observer exit")
+                root.phase = 6
+            } else if (root.phase === 6 && a && b && a.connected && b.connected && a.snapshot.ready && b.snapshot.ready
+                       && b.snapshot.observedAt !== root.previousObservation) {
+                console.log("Both widgets recovered fresh live observations after observer exit")
                 Qt.quit()
             }
-            if (root.ticks >= 80) {
+            if (root.ticks >= 120) {
                 console.error("Multiple widgets did not receive live data:", a ? a.message : "removed", b ? b.message : "removed")
                 Qt.exit(1)
             }
