@@ -54,6 +54,7 @@ ShellRoot {
                 console.log("All widgets removed and recreated successfully")
                 root.previousObservation = b.snapshot.observedAt
                 console.log("REQUEST_OBSERVER_RESTART")
+                root.ticks = 0
                 root.phase = 5
             } else if (root.phase === 5 && a && b && !a.connected && !b.connected) {
                 console.log("Both widgets detected observer exit")

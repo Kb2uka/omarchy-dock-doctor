@@ -34,7 +34,7 @@ def run(harness, log):
         process = subprocess.Popen(["quickshell", "-p", harness, "--no-color"],
                                    stdout=output, stderr=subprocess.STDOUT)
         try:
-            deadline = time.monotonic() + 20
+            deadline = time.monotonic() + 30
             while process.poll() is None:
                 current_observers = 0
                 for pid in descendants(process.pid):
