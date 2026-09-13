@@ -23,7 +23,7 @@ Rectangle {
         DockButton { objectName:"tree-toggle"; text:"Tree"; quiet:true; implicitWidth:54; implicitHeight:32; highlighted:!root.listMode; onClicked:root.listMode=false; background:Rectangle { radius:7; color:root.listMode ? "transparent" : P.raised; border.color:P.border } }
         DockButton { objectName:"list-toggle"; text:"List"; quiet:true; implicitWidth:54; implicitHeight:32; onClicked:root.listMode=true; background:Rectangle { radius:7; color:root.listMode ? P.raised : "transparent"; border.color:P.border } }
     }
-    DockText { x:16; y:43; visible:!!root.computer && !root.listMode; text:root.showDetails?"Full USB paths inside this computer":"USB buses and single-branch hub paths are collapsed"; color:P.muted; font.pixelSize:10 }
+    DockText { x:16; y:43; visible:!!root.computer && !root.listMode; text:root.showDetails?"Full USB paths inside this computer":"Internal USB routing is simplified"; color:P.muted; font.pixelSize:10 }
     Flickable {
         id: view
         x:8; y:root.computer?68:54; width:parent.width-16; height:parent.height-y-8
