@@ -2,3 +2,6 @@
 .claude/worktrees/
 __pycache__/
 *.pyc
+
+# Keep local contributor instructions out of the installed checkout.
+AGENTS.md
