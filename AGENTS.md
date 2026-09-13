@@ -124,9 +124,11 @@ git diff --check
 - Plugin: kb2uka.dock-doctor. State: ~/.local/state/dock-doctor, outside plugin checkout.
 - No network sockets. Tests use temporary filesystem fixtures and mocked event sources.
 - One observer belongs to the shell plugin and exits when its input closes.
+- Its USB event monitor is bound to the observer's lifetime, including abrupt shell shutdown.
 
 ### Evidence tiers here
 
+A: fail-then-pass regressions for retained files, observer lifetime, and interface behavior.
 B: native Qt screenshots at reference and narrow sizes, plus interaction tests.
 D: read-only live USB inventory and observation logs.
 

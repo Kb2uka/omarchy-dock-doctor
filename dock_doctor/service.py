@@ -10,6 +10,7 @@ import sys
 import time
 
 from .discovery import scan
+from .processes import parent_death_binding
 from .state import Store, changes, compare, timestamp, MAX_EVENTS
 from . import files
 
@@ -111,7 +112,8 @@ def watch(observer):
         try:
             monitor = subprocess.Popen(["/usr/bin/udevadm", "monitor", "--udev", "--subsystem-match=usb"],
                                        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                       env={"PATH": "/usr/bin:/bin", "LANG": "C"}, start_new_session=True)
+                                       env={"PATH": "/usr/bin:/bin", "LANG": "C"}, start_new_session=True,
+                                       preexec_fn=parent_death_binding())
             selector.register(monitor.stdout, selectors.EVENT_READ, "udev")
         except OSError:
             pass

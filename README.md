@@ -96,7 +96,8 @@ omarchy plugin disable kb2uka.dock-doctor
 omarchy plugin remove kb2uka.dock-doctor
 ```
 
-Disabling/removing the plugin stops its observer. Baselines, history, and exported
+Disabling/removing the plugin stops its observer. The event monitor is tied to the
+observer with a Linux parent-death signal, so abrupt shell shutdown cannot leave it running. Baselines, history, and exported
 reports remain yours in the state directory. No desktop keybindings or system
 services are installed.
 

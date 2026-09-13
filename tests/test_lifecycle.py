@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import select
+import signal
 import subprocess
 import sys
 import tempfile
@@ -57,6 +58,27 @@ service.main()
             self.assertNotIn("could not start", result["message"])
             with self.assertRaises(ProcessLookupError):
                 os.kill(int(error.strip()), 0)
+
+    def test_sigkill_stops_the_event_monitor(self):
+        with tempfile.TemporaryDirectory() as directory:
+            process = self.launch(directory)
+            monitor_fd = None
+            try:
+                self.assertTrue(select.select([process.stdout], [], [], 5)[0])
+                self.assertEqual(json.loads(process.stdout.readline())["kind"], "snapshot")
+                monitor_fd = os.pidfd_open(int(process.stderr.readline().strip()))
+                process.kill()
+                process.communicate(timeout=5)
+                self.assertTrue(select.select([monitor_fd], [], [], 2)[0],
+                                "USB monitor survived abrupt observer termination")
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.communicate()
+                if monitor_fd is not None:
+                    if not select.select([monitor_fd], [], [], 0)[0]:
+                        signal.pidfd_send_signal(monitor_fd, signal.SIGTERM)
+                    os.close(monitor_fd)
 
     def test_sigterm_stops_monitor_and_releases_lock(self):
         with tempfile.TemporaryDirectory() as directory:

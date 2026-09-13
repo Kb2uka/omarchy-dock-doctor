@@ -10,7 +10,8 @@ does not sandbox plugins, so install only source you trust.
 - Python is launched by absolute path with isolated imports and a fixed environment.
   The bundled observer imports only its own package and the standard library.
 - The optional udev monitor has a fixed absolute executable and fixed arguments.
-  Device strings never become commands. It terminates on observer EOF or SIGTERM.
+  Device strings never become commands. Normal shutdown reaps the event monitor.
+  A Linux parent-death signal also terminates it if Quickshell forcibly kills the observer.
 - Scan cardinality, per-attribute reads, metadata length, command input, persisted
   file sizes, and retained event count are bounded.
 - All device and error text is rendered as plain text, including device tooltips.

@@ -11,7 +11,7 @@ Panel {
     implicitHeight:button.implicitHeight
     Connection { id:connection }
     function send(command) {
-        if(!backend.running || !connection.fresh) { connection.message="Observer unavailable. Please wait for reconnection.";return }
+        if(!backend.running || !connection.fresh) { connection.fail("Observer unavailable. Please wait for reconnection.");return }
         backend.write(JSON.stringify(command)+"\n")
     }
     Process {
@@ -22,7 +22,7 @@ Panel {
         stdinEnabled:true
         running:true
         stdout:SplitParser { onRead:function(data){connection.receive(data)} }
-        stderr:SplitParser { onRead:function(data){connection.message=String(data).slice(0,300)} }
+        stderr:SplitParser { onRead:function(data){connection.fail(data)} }
         onExited:{connection.lost();reconnect.restart()}
     }
     Timer { id:reconnect; interval:3000; onTriggered:backend.running=true }

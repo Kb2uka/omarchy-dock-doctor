@@ -38,7 +38,7 @@ for attempt in {1..50}; do
   kill -0 "$weston_pid" 2>/dev/null || { cat "$art/weston.log"; exit 1; }
   sleep 0.1
 done
-QT_QPA_PLATFORM=wayland timeout 20 quickshell -p "$harness" --no-color > "$art/native-parse.log" 2>&1
+QT_QPA_PLATFORM=wayland python3 tests/ui/native-run.py "$harness" "$art/native-parse.log"
 cat "$art/native-parse.log"
 rg -q 'Configuration Loaded' "$art/native-parse.log"
 ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-parse.log"

@@ -128,6 +128,12 @@ Item {
             connection.receive(JSON.stringify({kind:"snapshot",devices:[],events:[]}))
             compare(connection.message,"Working baseline saved")
         }
+        function test_resultSurvivesRecoverySnapshot() {
+            connection.receive("malformed")
+            connection.receive(JSON.stringify({kind:"result",message:"Report saved: private.json"}))
+            connection.receive(JSON.stringify({kind:"snapshot",devices:[],events:[]}))
+            compare(connection.message,"Report saved: private.json")
+        }
         function test_emptyInventoryAndHostileName() {
             var d=Demo.sample()
             d.devices[4].name="<img src='file:///etc/passwd'>"
