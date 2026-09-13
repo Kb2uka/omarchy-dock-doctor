@@ -37,10 +37,12 @@ class Observer:
                     self.observation = f"{len(removed)} devices disappeared in the same scan and share {parent}."
                 else:
                     self.observation = ""
+            if events or (self.store.error and not self.store.read_error):
                 try:
                     self.store.save()
-                except (OSError, ValueError) as error:
-                    self.store.error = "History could not be saved: " + str(error)
+                except (OSError, ValueError):
+                    # Store retains a bounded error; transient writes retry on the next scan.
+                    pass
             self.devices, self.started, self.scan_error, self.observed_at = devices, True, "", now
         except (OSError, ValueError) as error:
             self.scan_error = "USB scan unavailable: " + str(error)
@@ -176,4 +178,4 @@ def main():
     except (BrokenPipeError, KeyboardInterrupt):
         pass
     except (OSError, ValueError) as error:
-        emit({"kind": "result", "ok": False, "message": "Observer could not start: " + str(error)[:250]})
+        emit({"kind": "result", "ok": False, "message": "Observer unavailable: " + str(error)[:250]})

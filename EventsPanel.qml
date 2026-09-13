@@ -15,9 +15,9 @@ Rectangle {
         id:filterButton; objectName:"event-filter"; anchors.right:parent.right; anchors.rightMargin:16; y:10
         text:root.filter+"  ⌄"; quiet:true; implicitHeight:30
         onClicked:filterMenu.open()
-        Menu {
-            id:filterMenu; y:filterButton.height
-            Repeater { model:["All Events","Disconnects","Connections","Link changes"]; MenuItem { required property string modelData; text:modelData; onTriggered:root.filter=modelData } }
+        DockMenu {
+            id:filterMenu; objectName:"event-filter-menu"; y:filterButton.height
+            Repeater { model:["All Events","Disconnects","Connections","Link changes"]; MenuItem { required property string modelData; objectName:"filter-"+modelData; text:modelData; onTriggered:root.filter=modelData } }
         }
     }
     Flickable {

@@ -13,6 +13,7 @@ QtObject {
         try {
             var data=JSON.parse(line)
             if(data.kind==="snapshot" && Array.isArray(data.devices) && data.devices.length<=256 && Array.isArray(data.events) && data.events.length<=300) {
+                if(!alive)message=""
                 snapshot=data;lastReceived=Date.now();now=lastReceived;alive=true
             } else if(data.kind==="result") message=String(data.message || "")
         } catch(e) { message="Unreadable observer response";alive=false }

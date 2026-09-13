@@ -22,7 +22,18 @@ Canvas {
         function rect(x,y,w,h) { c.beginPath(); c.rect(x,y,w,h); c.fill(); c.stroke() }
         function line(x,y,xx,yy) { c.beginPath(); c.moveTo(x,y); c.lineTo(xx,yy); c.stroke() }
         function circle(x,y,r) { c.beginPath(); c.arc(x,y,r,0,Math.PI*2); c.fill(); c.stroke() }
-        if (kind === "laptop") {
+        if (kind === "settings") {
+            c.reset(); c.scale(width/60,height/60)
+            c.strokeStyle=ink; c.fillStyle=P.surface; c.lineWidth=2.5; c.lineJoin="round"
+            c.beginPath()
+            for (var tooth=0;tooth<32;tooth++) {
+                var angle=tooth*Math.PI/16
+                var radius=(tooth%4===0 || tooth%4===3)?23:18
+                var px=30+Math.cos(angle)*radius, py=30+Math.sin(angle)*radius
+                if(tooth===0)c.moveTo(px,py);else c.lineTo(px,py)
+            }
+            c.closePath();c.fill();c.stroke();circle(30,30,8)
+        } else if (kind === "laptop") {
             rect(14,6,52,37); line(19,12,61,12)
             c.beginPath(); c.moveTo(14,43); c.lineTo(7,49); c.lineTo(73,49); c.lineTo(66,43); c.closePath(); c.fill(); c.stroke()
             line(30,49,50,49)

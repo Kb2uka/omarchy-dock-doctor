@@ -47,6 +47,17 @@ service.main()
             with self.assertRaises(ProcessLookupError):
                 os.kill(pid, 0)
 
+    def test_oversized_protocol_input_reports_unavailability_and_cleans_up(self):
+        with tempfile.TemporaryDirectory() as directory:
+            process = self.launch(directory)
+            output, error = process.communicate(b"x" * 8193 + b"\n", timeout=5)
+            messages = [json.loads(line) for line in output.splitlines()]
+            result = next(m for m in messages if m.get("ok") is False)
+            self.assertIn("size limit", result["message"])
+            self.assertNotIn("could not start", result["message"])
+            with self.assertRaises(ProcessLookupError):
+                os.kill(int(error.strip()), 0)
+
     def test_sigterm_stops_monitor_and_releases_lock(self):
         with tempfile.TemporaryDirectory() as directory:
             process = self.launch(directory)

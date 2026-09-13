@@ -41,7 +41,7 @@ Panel {
             anchors.fill:parent
             snapshot:connection.snapshot
             connected:connection.fresh
-            message:connection.message
+            backendMessage:connection.message
             onCommandRequested:function(command){root.send(command)}
             onCloseRequested:root.close()
         }

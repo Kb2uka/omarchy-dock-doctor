@@ -43,9 +43,10 @@ class Store:
         self.events = []
         self.recording = True
         self.error = ""
+        self.read_error = ""
         try:
             data = files.read_file(self.directory / "state.json")
-            if data:
+            if data is not None:
                 value = json.loads(data)
                 if not isinstance(value, dict) or value.get("version") != 1:
                     raise ValueError("Unsupported saved state")
@@ -65,13 +66,19 @@ class Store:
                     raise ValueError("Invalid recording setting")
                 self.baseline, self.events, self.recording = baseline, events, value["recording"]
         except (OSError, ValueError, TypeError) as error:
-            self.error = "Saved state could not be read: " + str(error)
+            self.read_error = "Saved state could not be read: " + str(error)[:240]
+            self.error = self.read_error
 
     def save(self):
-        if self.error:
-            raise ValueError(self.error + ". Retained file was left untouched.")
-        files.atomic_write(self.directory / "state.json", encode({"version": 1, "baseline": self.baseline,
-                           "events": self.events, "recording": self.recording}))
+        if self.read_error:
+            raise ValueError(self.read_error + ". Retained file was left untouched.")
+        try:
+            files.atomic_write(self.directory / "state.json", encode({"version": 1, "baseline": self.baseline,
+                               "events": self.events, "recording": self.recording}))
+        except (OSError, ValueError) as error:
+            self.error = "Saved state could not be written: " + str(error)[:240]
+            raise
+        self.error = ""
 
     def save_baseline(self, devices):
         previous = self.baseline

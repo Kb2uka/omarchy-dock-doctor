@@ -7,7 +7,7 @@ import "../../Topology.js" as Graph
 Item {
     id:stage
     width:1200; height:800
-    Dock.DockView { id:view; anchors.fill:parent }
+    Dock.DockView { id:view; anchors.fill:parent; backendMessage:connection.message }
     Dock.Connection { id:connection }
     SignalSpy { id:commands; target:view; signalName:"commandRequested" }
     TestCase {
@@ -17,8 +17,10 @@ Item {
             stage.width=1200;stage.height=800
             view.demo=false;view.snapshot=Demo.sample();view.connected=true
             view.demoSnapshot=Demo.sample();view.selectedId="1-1.3"
-            view.page="Devices";view.message="";view.confirmingBaseline=false;view.confirmingClear=false
+            view.page="Devices";connection.message="";view.demoMessage="";view.confirmingBaseline=false;view.confirmingClear=false
             findChild(view,"topology").listMode=false
+            findChild(view,"event-filter-menu").close()
+            findChild(view,"device-actions-menu").close()
             commands.clear()
             wait(50)
         }
@@ -44,6 +46,28 @@ Item {
             mouseClick(findChild(view,"tree-toggle"))
             compare(findChild(view,"topology").listMode,false)
         }
+        function test_inspectorMenuOpensComparison() {
+            mouseClick(findChild(view,"device-menu"))
+            var menu=findChild(view,"device-actions-menu")
+            tryCompare(menu,"opened",true)
+            compare(menu.count,1)
+            verify(menu.itemAt(0).width>0,"Menu item width: "+menu.itemAt(0).width)
+            mouseClick(menu.itemAt(0))
+            tryCompare(view,"page","Compare")
+        }
+        function test_eventDropdownFiltersRows() {
+            mouseClick(findChild(view,"event-filter"))
+            var menu=findChild(view,"event-filter-menu")
+            tryCompare(menu,"opened",true)
+            compare(menu.count,4)
+            verify(menu.itemAt(1).width>0,"Menu item width: "+menu.itemAt(1).width)
+            mouseClick(menu.itemAt(1))
+            var panel=findChild(view,"events-panel")
+            tryCompare(panel,"filter","Disconnects")
+            compare(panel.filtered.length,2)
+            verify(panel.filtered.every(function(e){return e.type==="disconnect"}))
+            panel.filter="All Events"
+        }
         function test_navigationAndCompare() {
             mouseClick(findChild(view,"compare"))
             compare(view.page,"Compare")
@@ -68,6 +92,16 @@ Item {
             compare(view.demoSnapshot.devices[4].baselineSpeed,480)
             compare(view.snapshot.devices[4].baselineSpeed,5000)
         }
+        function test_demoReturnPreservesLiveMessages() {
+            view.page="Settings"
+            mouseClick(findChild(view,"demo-toggle"))
+            verify(view.demo)
+            view.page="Settings"
+            mouseClick(findChild(view,"demo-toggle"))
+            verify(!view.demo)
+            connection.receive(JSON.stringify({kind:"result",message:"Report saved: private.json"}))
+            compare(view.message,"Report saved: private.json")
+        }
         function test_exportInvokesRealCommand() {
             mouseClick(findChild(view,"export"))
             compare(commands.count,1)
@@ -85,6 +119,14 @@ Item {
             verify(!connection.fresh)
             connection.lost()
             verify(!connection.alive)
+        }
+        function test_reconnectClearsOnlyConnectionError() {
+            connection.lost()
+            connection.receive(JSON.stringify({kind:"snapshot",devices:[],events:[]}))
+            compare(connection.message,"")
+            connection.receive(JSON.stringify({kind:"result",message:"Working baseline saved"}))
+            connection.receive(JSON.stringify({kind:"snapshot",devices:[],events:[]}))
+            compare(connection.message,"Working baseline saved")
         }
         function test_emptyInventoryAndHostileName() {
             var d=Demo.sample()

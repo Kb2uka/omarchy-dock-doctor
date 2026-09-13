@@ -13,7 +13,9 @@ Rectangle {
     property var demoSnapshot:Demo.sample()
     property string page:"Devices"
     property string selectedId:""
-    property string message:""
+    property string backendMessage:""
+    property string demoMessage:""
+    readonly property string message:demo?demoMessage:backendMessage
     property bool confirmingBaseline:false
     property bool confirmingClear:false
     readonly property var current:demo?demoSnapshot:snapshot
@@ -38,8 +40,8 @@ Rectangle {
                 var next=JSON.parse(JSON.stringify(demoSnapshot))
                 next.baselineAt=new Date().toISOString()
                 next.devices.forEach(function(d){d.baselineSpeed=d.speed;d.comparison="Unchanged"})
-                demoSnapshot=next; message="Illustrative baseline saved in memory."
-            } else if(action==="export") message="Demo report preview only. Switch to live devices to export a real report."
+                demoSnapshot=next; demoMessage="Illustrative baseline saved in memory."
+            } else if(action==="export") demoMessage="Demo report preview only. Switch to live devices to export a real report."
             return
         }
         commandRequested({action:action})
@@ -55,7 +57,7 @@ Rectangle {
         Column {
             x:12; y:146; width:parent.width-13; spacing:2
             Repeater {
-                model:[["Devices","▱"],["Compare","⇄"],["Event Log","▤"],["Settings","⚙"]]
+                model:[["Devices","▱"],["Compare","⇄"],["Event Log","▤"],["Settings",""]]
                 delegate: AbstractButton {
                     required property var modelData
                     objectName:"nav-"+modelData[0]
@@ -69,7 +71,8 @@ Rectangle {
                     }
                     contentItem:Row {
                         leftPadding:13; spacing:13
-                        DockText { text:modelData[1]; width:20; height:40; font.pixelSize:20; color:P.secondary }
+                        DockText { text:modelData[1]; width:20; height:40; font.pixelSize:20; color:P.secondary; visible:modelData[0]!=="Settings" }
+                        Item { width:20; height:40; visible:modelData[0]==="Settings"; DeviceIcon { anchors.centerIn:parent; width:20; height:20; kind:"settings"; ink:P.secondary } }
                         DockText { text:modelData[0]; height:40; color:root.page===modelData[0]?P.text:P.secondary; font.pixelSize:12 }
                     }
                 }
@@ -124,9 +127,10 @@ Rectangle {
             visible:root.page==="Devices"
             Layout.fillWidth:true; Layout.fillHeight:true; spacing:10
             TopologyPanel { id:topology; objectName:"topology"; Layout.fillWidth:true; Layout.fillHeight:true; Layout.preferredWidth:650; devices:root.devices; selectedId:root.selectedId; onDeviceSelected:function(deviceId){root.selectedId=deviceId} }
-            Inspector { objectName:"inspector"; Layout.fillHeight:true; Layout.preferredWidth:Math.max(280,(root.width-sidebar.width-38)*0.32); device:root.selected; devices:root.devices }
+            Inspector { objectName:"inspector"; Layout.fillHeight:true; Layout.preferredWidth:Math.max(280,(root.width-sidebar.width-38)*0.32); device:root.selected; devices:root.devices; onCompareRequested:root.page="Compare" }
         }
         EventsPanel {
+            objectName:"events-panel"
             visible:root.page==="Devices" || root.page==="Event Log"
             Layout.fillWidth:true; Layout.fillHeight:root.page==="Event Log"; Layout.preferredHeight:root.page==="Devices"?224:500
             events:root.current.events || []; observation:root.current.observation || ""; expanded:root.page==="Event Log"
@@ -151,7 +155,7 @@ Rectangle {
                 Rectangle { width:parent.width; height:1; color:P.border }
                 DockText { text:"Design preview"; font.pixelSize:14; font.weight:Font.DemiBold }
                 DockText { width:parent.width; text:"Explore the interface with illustrative readings. Demo actions stay in memory and never replace your live baseline."; color:P.secondary; wrapMode:Text.WordWrap; elide:Text.ElideNone }
-                DockButton { objectName:"demo-toggle"; text:root.demo?"Return to live devices":"Open illustrative demo"; quiet:true; onClicked:{root.demo=!root.demo;root.message="";root.page="Devices";root.selectedId="";root.chooseInitial()} }
+                DockButton { objectName:"demo-toggle"; text:root.demo?"Return to live devices":"Open illustrative demo"; quiet:true; onClicked:{root.demo=!root.demo;root.demoMessage="";root.page="Devices";root.selectedId="";root.chooseInitial()} }
             }
         }
     }

@@ -6,6 +6,7 @@ Rectangle {
     id:root
     property var device:null
     property var devices:[]
+    signal compareRequested()
     readonly property string parentName: { var p=devices.find(function(d){return root.device && d.id===root.device.parent}); return p?p.name:"Not reported" }
     color:P.surface; radius:P.radius; border.color:P.border
     ScrollView {
@@ -17,9 +18,19 @@ Rectangle {
                 width:parent.width; spacing:10
                 DeviceIcon { width:42; height:48; kind:root.device ? root.device.kind:"device" }
                 Column {
-                    width:parent.width-52; spacing:5
+                    width:parent.width-84; spacing:5
                     DockText { width:parent.width; text:root.device?root.device.name:"Select a device"; font.pixelSize:17; font.weight:Font.DemiBold; wrapMode:Text.WordWrap; elide:Text.ElideNone }
                     DockText { width:parent.width; text:root.device?root.device.category:"Explore the connection tree"; color:P.secondary; wrapMode:Text.WordWrap }
+                }
+                DockButton {
+                    objectName:"device-menu"; text:"⋯"; quiet:true; implicitWidth:22; implicitHeight:28; padding:0
+                    Accessible.name:"Device actions"
+                    enabled:root.device!==null
+                    onClicked:deviceMenu.open()
+                    DockMenu {
+                        id:deviceMenu; objectName:"device-actions-menu"
+                        MenuItem { objectName:"device-compare-action"; text:"Compare with baseline"; onTriggered:root.compareRequested() }
+                    }
                 }
             }
             Column {
@@ -47,9 +58,9 @@ Rectangle {
                 color:"#29261b"; border.color:"#79602e"; radius:6
                 Row {
                     id:warning; x:12; y:12; width:parent.width-24; spacing:9
-                    DockText { text:"!"; font.bold:true; color:P.gold; font.pixelSize:22; width:14 }
+                    Rectangle { width:20; height:20; radius:10; color:P.gold; DockText { anchors.fill:parent; horizontalAlignment:Text.AlignHCenter; text:"!"; font.bold:true; color:P.sidebar; font.pixelSize:14 } }
                     Column {
-                        width:parent.width-23; spacing:8
+                        width:parent.width-29; spacing:8
                         DockText { width:parent.width; text:"Link speed is lower than your saved baseline."; color:P.gold; font.weight:Font.DemiBold; wrapMode:Text.WordWrap; elide:Text.ElideNone }
                         DockText { width:parent.width; text:"Try another cable or port, then compare again."; color:P.secondary; font.pixelSize:11; wrapMode:Text.WordWrap; elide:Text.ElideNone }
                     }

@@ -215,6 +215,44 @@ class StateTests(unittest.TestCase):
         self.assertEqual(compare([device(speed=None)], {"devices": [device()]})[0]["comparison"], "Not reported")
 
 
+class RecoveryTests(unittest.TestCase):
+    def test_empty_existing_state_is_preserved(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "state.json"
+            path.write_bytes(b"")
+            store = Store(temp)
+            self.assertTrue(store.error)
+            with self.assertRaises(ValueError):
+                store.save_baseline([])
+            self.assertEqual(path.read_bytes(), b"")
+
+    def test_transient_history_failure_recovers_without_new_events(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store = Store(temp)
+            devices = [device()]
+            observer = Observer(store, scanner=lambda:list(devices))
+            observer.refresh()
+            devices.clear()
+            with patch("dock_doctor.files.atomic_write", side_effect=OSError("disk full")):
+                observer.refresh()
+            self.assertTrue(store.error)
+            observer.refresh()
+            self.assertEqual(store.error, "")
+            self.assertEqual(len(Store(temp).events), 1)
+
+    def test_error_size_stays_bounded(self):
+        with tempfile.TemporaryDirectory() as temp:
+            store = Store(temp)
+            devices = [device()]
+            observer = Observer(store, scanner=lambda:list(devices))
+            observer.refresh()
+            with patch("dock_doctor.files.atomic_write", side_effect=OSError("disk full")):
+                for i in range(20):
+                    devices[:] = [device()] if i % 2 else []
+                    observer.refresh()
+            self.assertLess(len(store.error), 400)
+
+
 class ObserverTests(unittest.TestCase):
     setUp = StateTests.setUp
     def make(self, devices):
