@@ -36,25 +36,24 @@ def run(harness, log):
         try:
             deadline = time.monotonic() + 30
             while process.poll() is None:
-                current_observers = 0
                 for pid in descendants(process.pid):
                     try:
                         argv = Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")
                         role = ("observer" if any(a.endswith(b"/dock-doctor.py") for a in argv)
                                 else "monitor" if argv[:2] == [b"/usr/bin/udevadm", b"monitor"] else "")
-                        if role == "observer":
-                            current_observers += 1
                         if role and pid not in tracked:
                             tracked[pid] = (role, os.pidfd_open(pid))
                     except ProcessLookupError:
                         pass
                     except FileNotFoundError:
                         pass
-                if current_observers > 1:
+                observer_fds = [fd for role, fd in tracked.values() if role == "observer"]
+                # Sample lifetime together: /proc traversal can span a process handoff.
+                exited = set(select.select(observer_fds, [], [], 0)[0])
+                observers = [fd for fd in observer_fds if fd not in exited]
+                if len(observers) > 1:
                     raise RuntimeError("Multiple observer processes started in one shell")
                 if not restart_injected and "REQUEST_OBSERVER_RESTART" in Path(log).read_text():
-                    observers = [fd for role, fd in tracked.values()
-                                 if role == "observer" and not select.select([fd], [], [], 0)[0]]
                     if len(observers) != 1:
                         raise RuntimeError("Crash recovery requires exactly one live observer")
                     signal.pidfd_send_signal(observers[0], signal.SIGKILL)
