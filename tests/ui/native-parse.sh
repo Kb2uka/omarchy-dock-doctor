@@ -13,6 +13,7 @@ trap cleanup EXIT
 mkdir -p "$harness/dock" "$harness/runtime" "$harness/state"
 chmod 700 "$harness/runtime" "$harness/state"
 cp ./*.qml ./*.js ./dock-doctor.py "$harness/dock/"
+cp -r ./runtime "$harness/dock/"
 cp -r dock_doctor "$harness/dock/"
 cp -r /usr/share/omarchy/shell/Ui /usr/share/omarchy/shell/Commons "$harness/"
 cat > "$harness/shell.qml" <<'QML'
@@ -53,4 +54,12 @@ if [[ -z "${DOCK_NATIVE_CASE:-}" ]]; then
   rg -q 'All widgets removed and recreated successfully' "$art/native-multimonitor.log"
   rg -q 'Both widgets recovered fresh live observations after observer exit' "$art/native-multimonitor.log"
   ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-multimonitor.log"
+
+  mkdir -p "$harness/cold"
+  cp -r "$harness/Ui" "$harness/Commons" "$harness/cold/"
+  cp tests/ui/native-cold.qml "$harness/cold/shell.qml"
+  DOCK_PLUGIN_DIR="$harness/dock" QT_QPA_PLATFORM=wayland python3 tests/ui/native-run.py "$harness/cold" "$art/native-cold.log"
+  cat "$art/native-cold.log"
+  rg -q 'Both cold-loaded badge windows show fresh live readings after reopening' "$art/native-cold.log"
+  ! rg -q 'ERROR|ReferenceError|TypeError|is not a type|Cannot assign' "$art/native-cold.log"
 fi

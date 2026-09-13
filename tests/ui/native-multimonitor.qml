@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import "dock" as Dock
+import "dock/runtime" as Runtime
 
 ShellRoot {
     id: root
@@ -45,7 +46,7 @@ ShellRoot {
                 root.removedAt = root.ticks
                 root.phase = 3
             } else if (root.phase === 3 && root.ticks-root.removedAt >= 12) {
-                if (Dock.LiveObserver.consumers !== 0 || Dock.LiveObserver.connection.alive)
+                if (Runtime.LiveObserver.consumers !== 0 || Runtime.LiveObserver.connection.alive)
                     throw new Error("Observer must stop when the last widget is removed")
                 first.active = true
                 second.active = true
