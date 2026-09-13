@@ -35,6 +35,18 @@ Item {
             wait(150)
             grabImage(view).save(Qt.resolvedUrl("../../.artifacts/feat_dock_doctor/interface-1000.png").toString().replace("file://", ""))
         }
+        function test_usbBusPresentation() {
+            var sample=Demo.sample()
+            sample.devices[0].name="USB bus 1"
+            sample.devices[0].kind="controller"
+            sample.devices[0].category="USB Root Hub"
+            view.snapshot=sample
+            view.selectedId=sample.devices[0].id
+            wait(150)
+            compare(view.selected.kind,"controller")
+            compare(findChild(view,"inspector").device.name,"USB bus 1")
+            grabImage(view).save(Qt.resolvedUrl("../../.artifacts/feat_dock_doctor/usb-bus-presentation.png").toString().replace("file://", ""))
+        }
         function test_deviceSelectionUpdatesInspector() {
             mouseClick(findChild(view,"device-1-1.2"))
             compare(view.selected.name,"Webcam")

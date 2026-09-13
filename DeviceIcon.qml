@@ -37,6 +37,13 @@ Canvas {
             rect(14,6,52,37); line(19,12,61,12)
             c.beginPath(); c.moveTo(14,43); c.lineTo(7,49); c.lineTo(73,49); c.lineTo(66,43); c.closePath(); c.fill(); c.stroke()
             line(30,49,50,49)
+        } else if (kind === "controller") {
+            rect(23,13,34,34); rect(31,21,18,18)
+            for (var pin=0;pin<4;pin++) {
+                var offset=27+pin*8
+                line(offset,7,offset,13); line(offset,47,offset,53)
+                line(17,17+pin*8,23,17+pin*8); line(57,17+pin*8,63,17+pin*8)
+            }
         } else if (kind === "hub") {
             rect(6,20,68,27); line(7,25,73,25)
             c.strokeStyle = "#7991a0"
