@@ -36,6 +36,22 @@ def optional(path):
         return ""
 
 
+def computer_info(dmi_root=Path("/sys/class/dmi/id"), model_path=Path("/sys/firmware/devicetree/base/model"), hostname=None):
+    def read(path):
+        try:
+            return attribute(path)
+        except (OSError, ValueError):
+            return ""
+
+    model = read(dmi_root / "product_name") or read(model_path)
+    try:
+        name = clean(os.uname().nodename if hostname is None else hostname)
+    except OSError:
+        name = ""
+    return {"name": name or model or "This computer", "model": model,
+            "manufacturer": read(dmi_root / "sys_vendor")}
+
+
 def numeric(value):
     try:
         result = float(value)

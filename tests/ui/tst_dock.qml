@@ -19,6 +19,7 @@ Item {
             view.demoSnapshot=Demo.sample();view.selectedId="1-1.3"
             view.page="Devices";connection.message="";view.demoMessage="";view.confirmingBaseline=false;view.confirmingClear=false
             findChild(view,"topology").listMode=false
+            findChild(view,"topology").showDetails=false
             findChild(view,"event-filter-menu").close()
             findChild(view,"device-actions-menu").close()
             commands.clear()
@@ -163,6 +164,54 @@ Item {
             verify(g.width>=600)
             var positions={}
             g.nodes.forEach(function(n){verify(!positions[n.x+","+n.y]);positions[n.x+","+n.y]=true})
+        }
+        function test_computerRootAndCollapsedHubPath() {
+            var devices=[
+                {id:"usb1",parent:"",controller:true,kind:"controller"},
+                {id:"usb2",parent:"",controller:true,kind:"controller"},
+                {id:"1-1",parent:"usb1",kind:"hub",name:"Desk hub"},
+                {id:"1-1.1",parent:"1-1",kind:"hub",name:"Internal hub"},
+                {id:"1-1.1.1",parent:"1-1.1",kind:"storage",name:"SSD"},
+                {id:"1-1.1.2",parent:"1-1.1",kind:"audio",name:"Audio"}
+            ]
+            var original=JSON.stringify(devices)
+            var simple=Graph.present(devices,{name:"XPS 16 DA16260"},false)
+            compare(simple.filter(function(d){return d.computer}).length,1)
+            compare(simple[0].name,"XPS 16 DA16260")
+            compare(simple.filter(function(d){return d.kind==="controller"}).length,0)
+            compare(simple.filter(function(d){return d.kind==="hub"}).length,1)
+            compare(simple.find(function(d){return d.id==="1-1"}).collapsedHubs,2)
+            compare(simple.find(function(d){return d.id==="1-1.1.1"}).parent,"1-1")
+            var detailed=Graph.present(devices,{name:"XPS 16 DA16260"},true)
+            compare(detailed.length,devices.length+1)
+            compare(detailed.find(function(d){return d.id==="usb1"}).parent,"@computer")
+            compare(detailed.find(function(d){return d.id==="1-1.1.1"}).parent,"1-1.1")
+            compare(JSON.stringify(devices),original)
+            compare(Graph.present(devices,null,false),devices)
+        }
+        function test_computerTreeAndUsbDetails() {
+            var snapshot=Demo.sample()
+            snapshot.computer={name:"xps16",model:"XPS 16 DA16260"}
+            snapshot.devices[0].name="USB bus 1"
+            snapshot.devices[0].kind="controller"
+            snapshot.devices[0].category="USB Root Hub"
+            snapshot.devices.push({id:"usb2",parent:"",name:"USB bus 2",kind:"controller",controller:true,category:"USB Root Hub"})
+            view.snapshot=snapshot
+            wait(150)
+            var topology=findChild(view,"topology")
+            compare(findChild(topology,"device-@computer").device.name,"xps16")
+            compare(topology.displayedDevices.filter(function(d){return d.kind==="controller"}).length,0)
+            compare(view.devices.length,snapshot.devices.length)
+            grabImage(view).save(Qt.resolvedUrl("../../.artifacts/feat_dock_doctor/computer-simple.png").toString().replace("file://", ""))
+            mouseClick(findChild(topology,"usb-details-toggle"))
+            wait(100)
+            verify(topology.showDetails)
+            compare(topology.displayedDevices.length,snapshot.devices.length+1)
+            verify(findChild(topology,"device-usb2")!==null)
+            grabImage(view).save(Qt.resolvedUrl("../../.artifacts/feat_dock_doctor/computer-details.png").toString().replace("file://", ""))
+            mouseClick(findChild(topology,"usb-details-toggle"))
+            verify(!topology.showDetails)
+            compare(view.selectedId,"1-1.3")
         }
         function test_graphCycleIsBounded() {
             var g=Graph.arrange([{id:"a",parent:"b"},{id:"b",parent:"a"}],600)

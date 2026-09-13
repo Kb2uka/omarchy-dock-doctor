@@ -6,6 +6,9 @@ import "Topology.js" as Graph
 Rectangle {
     id: root
     property var devices: []
+    property var computer: null
+    property bool showDetails: false
+    readonly property var displayedDevices: Graph.present(devices, computer, showDetails)
     property string selectedId: ""
     property bool listMode: false
     signal deviceSelected(string deviceId)
@@ -15,16 +18,18 @@ Rectangle {
     DockText { x:16; y:12; height:30; text:"Connection Tree"; font.pixelSize:16; font.weight:Font.DemiBold }
     Row {
         anchors.right: parent.right; anchors.rightMargin:12; y:10; spacing:4
+        DockButton { objectName:"usb-details-toggle"; visible:!!root.computer && !root.listMode; text:root.showDetails?"Hide USB paths":"Show USB paths"; quiet:true; implicitHeight:32; onClicked:root.showDetails=!root.showDetails }
         DockText { height:32; text:"View:"; color:P.secondary; rightPadding:6 }
         DockButton { objectName:"tree-toggle"; text:"Tree"; quiet:true; implicitWidth:54; implicitHeight:32; highlighted:!root.listMode; onClicked:root.listMode=false; background:Rectangle { radius:7; color:root.listMode ? "transparent" : P.raised; border.color:P.border } }
         DockButton { objectName:"list-toggle"; text:"List"; quiet:true; implicitWidth:54; implicitHeight:32; onClicked:root.listMode=true; background:Rectangle { radius:7; color:root.listMode ? P.raised : "transparent"; border.color:P.border } }
     }
+    DockText { x:16; y:43; visible:!!root.computer && !root.listMode; text:root.showDetails?"Full USB paths inside this computer":"USB buses and single-branch hub paths are collapsed"; color:P.muted; font.pixelSize:10 }
     Flickable {
         id: view
-        x:8; y:54; width:parent.width-16; height:parent.height-62
+        x:8; y:root.computer?68:54; width:parent.width-16; height:parent.height-y-8
         clip:true
         visible:!root.listMode
-        property var graph: Graph.arrange(root.devices,width,height)
+        property var graph: Graph.arrange(root.displayedDevices,width,height)
         contentWidth:graph.width
         contentHeight:Math.max(height,graph.height)
         function revealSelected() {

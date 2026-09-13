@@ -9,15 +9,16 @@ import subprocess
 import sys
 import time
 
-from .discovery import scan
+from .discovery import scan, computer_info
 from .processes import parent_death_binding
 from .state import Store, changes, compare, timestamp, MAX_EVENTS
 from . import files
 
 
 class Observer:
-    def __init__(self, store, scanner=scan):
+    def __init__(self, store, scanner=scan, computer=None):
         self.store, self.scanner = store, scanner
+        self.computer = computer or {"name": "This computer", "manufacturer": ""}
         self.devices = []
         self.started = False
         self.scan_error = ""
@@ -55,7 +56,7 @@ class Observer:
         keys = {d["key"] for d in self.devices}
         missing = [dict(d, speed=None, baselineSpeed=d["speed"], comparison="Not connected")
                    for d in old if d["key"] not in keys and not d["controller"]]
-        return {"kind": "snapshot", "devices": compare(self.devices, self.store.baseline),
+        return {"kind": "snapshot", "computer": self.computer, "devices": compare(self.devices, self.store.baseline),
                 "missingDevices": missing if self.started else [],
                 "events": self.store.events, "baselineAt": self.store.baseline["at"] if self.store.baseline else "",
                 "recording": self.store.recording, "observedAt": self.observed_at,
@@ -175,7 +176,7 @@ def main():
             raise KeyboardInterrupt
         signal.signal(signal.SIGTERM, stop)
         with files.exclusive_lock(base / "dock-doctor/observer.lock"):
-            observer = Observer(Store(base / "dock-doctor"))
+            observer = Observer(Store(base / "dock-doctor"), computer=computer_info())
             watch(observer)
     except (BrokenPipeError, KeyboardInterrupt):
         pass

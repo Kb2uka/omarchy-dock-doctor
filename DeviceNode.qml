@@ -9,6 +9,7 @@ AbstractButton {
     width: 132
     height: 116
     hoverEnabled: true
+    enabled: !device.computer
     Accessible.name: device.name || "USB device"
     background: Rectangle {
         radius: 7
@@ -20,7 +21,7 @@ AbstractButton {
         DeviceIcon { anchors.horizontalCenter: parent.horizontalCenter; kind: root.device.kind || "device"; width: 62; height: 46 }
         DockText { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.device.name || ""; font.weight: Font.DemiBold }
         DockText { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.device.controller ? root.device.category : P.speed(root.device.speed); color: P.secondary; font.pixelSize: 11 }
-        DockText { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.device.controller ? "" : root.device.category || ""; color: P.secondary; font.pixelSize: 11 }
+        DockText { width: parent.width; horizontalAlignment: Text.AlignHCenter; text: root.device.collapsedHubs > 1 ? "USB path · "+root.device.collapsedHubs+" hubs" : root.device.controller ? "" : root.device.category || ""; color: P.secondary; font.pixelSize: 11 }
     }
     ToolTip {
         visible:root.hovered
